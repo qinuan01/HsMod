@@ -1,0 +1,29 @@
+name: Build HSMod DLL
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.3.1
+
+      - name: Restore NuGet packages
+        run: nuget restore HSMod.csproj
+
+      - name: Build DLL
+        run: msbuild HSMod.csproj /p:Configuration=Release
+
+      - name: Upload built DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: HSMod-DLL
+          path: '**/bin/Release/**/*.dll'
