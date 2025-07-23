@@ -201,7 +201,7 @@ namespace HsMod
                 }
                 else if (keyTimeGearDown.Value.IsDown())
                 {
-                    if (timeGear.Value == -8) return;
+                    if (timeGear.Value == -32) return;
                     if (timeGear.Value <= -2 || timeGear.Value >= 2) timeGear.Value -= 1;
                     else timeGear.Value = -2;
                     return;
