@@ -1876,7 +1876,7 @@ namespace HsMod
                 return true;
             }
             // 选择识别（对手抉择提示）
-                        [HarmonyPrefix]
+            [HarmonyPrefix]
             [HarmonyPatch(typeof(GameState), "OnPowerHistory")]
             public static void PatchDebugPrintPower(GameState __instance, ref List<Network.PowerHistory> powerList)
             {
