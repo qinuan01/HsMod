@@ -194,21 +194,21 @@ namespace HsMod
             {
                 if (keyTimeGearUp.Value.IsDown())
                 {
-                    if (timeGear.Value == 16) return;
+                    if (timeGear.Value == 32) return;
                     if (timeGear.Value <= -2 || timeGear.Value >= 2) timeGear.Value += 1;
                     else timeGear.Value = 2;
                     return;
                 }
                 else if (keyTimeGearDown.Value.IsDown())
                 {
-                    if (timeGear.Value == -16) return;
+                    if (timeGear.Value == -8) return;
                     if (timeGear.Value <= -2 || timeGear.Value >= 2) timeGear.Value -= 1;
                     else timeGear.Value = -2;
                     return;
                 }
                 else if (keyTimeGearMax.Value.IsDown())
                 {
-                    timeGear.Value = timeGear.Value >= 4 ? 16 : 4;
+                    timeGear.Value = timeGear.Value >= 4 ? 32 : 4;
                     return;
                 }
                 else if (keyTimeGearDefault.Value.IsDown())
