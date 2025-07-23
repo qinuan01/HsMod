@@ -1876,7 +1876,7 @@ namespace HsMod
                 return true;
             }
             // 选择识别（对手抉择提示）
-            [HarmonyPrefix]
+                        [HarmonyPrefix]
             [HarmonyPatch(typeof(GameState), "OnPowerHistory")]
             public static void PatchDebugPrintPower(GameState __instance, ref List<Network.PowerHistory> powerList)
             {
@@ -1885,72 +1885,50 @@ namespace HsMod
                     if (isCardTrackerEnable.Value && !GameMgr.Get().IsBattlegrounds() && !GameMgr.Get().IsMercenaries())
                     {
                         if (powerList == null) return;
-            
-                        List<string> discoveredOptions = new();
-                        List<string> discoveredPicked = new();
-            
-                        foreach (var pl in powerList)
+                        List<string> hintList = new List<string>();
+                        int i = 0;
+                        foreach (Network.PowerHistory pl in powerList)
                         {
+                            i++;
                             if (pl == null) continue;
-            
-                            if (pl.Type == Network.PowerType.SHOW_ENTITY)
+                            Network.PowerHistory powerHistory = pl;
+                            if (powerHistory.Type == Network.PowerType.SHOW_ENTITY)
                             {
-                                var netEntity = ((Network.HistShowEntity)pl).Entity;
-                                var entity = __instance?.GetEntity(netEntity.ID);
-            
-                                if (entity != null &&
-                                    entity.GetControllerSide() == Player.Side.OPPOSING &&
-                                    entity.GetZone() == TAG_ZONE.SETASIDE &&
-                                    entity.GetCardType() != TAG_CARDTYPE.ENCHANTMENT)
+                                Network.Entity netEntity = ((Network.HistShowEntity)powerHistory).Entity;
+                                Entity entity = __instance?.GetEntity(netEntity.ID);
+                                if (entity != null && entity.GetControllerSide() == global::Player.Side.OPPOSING && entity.GetZone() == TAG_ZONE.SETASIDE && entity.GetCardType() != TAG_CARDTYPE.ENCHANTMENT)
                                 {
-                                    var def = DefLoader.Get()?.GetEntityDef(netEntity.CardID);
-                                    if (def != null && !def.IsQuestline())
+                                    EntityDef entityDef = DefLoader.Get()?.GetEntityDef(netEntity.CardID);
+                                    if (entityDef != null && entityDef.GetCardType() != TAG_CARDTYPE.ENCHANTMENT && !entityDef.IsQuestline())
                                     {
-                                        discoveredOptions.Add(def.GetName());
+                                        string hintText = entityDef.GetName();
+                                        if (hintText != null)
+                                        {
+                                            hintText = hintText + "\n" + entityDef.GetCardTextInHand();
+                                            UIStatus.Get().AddInfo($"注意: {hintText}", 15f);
+                                        }
                                     }
                                 }
                             }
-            
-                            if (pl.Type == Network.PowerType.FULL_ENTITY)
+                            if (powerHistory.Type == Network.PowerType.FULL_ENTITY)
                             {
-                                var entity3 = ((Network.HistFullEntity)pl).Entity;
-            
-                                bool isOpponent = false;
-                                bool isToHand = false;
-            
-                                foreach (var tg in entity3.Tags)
+                                Network.Entity entity3 = ((Network.HistFullEntity)powerHistory).Entity;
+                                int j = 0;
+                                foreach (Network.Entity.Tag tg in entity3.Tags)
                                 {
-                                    if (tg.Name == 49 && tg.Value == 4) // ZONE = HAND
-                                        isToHand = true;
-                                    if (tg.Name == 50 && tg.Value == 1) // CONTROLLER = OPPOSING
-                                        isOpponent = true;
-                                }
-            
-                                if (isOpponent && isToHand)
-                                {
-                                    var def = DefLoader.Get().GetEntityDef(entity3.CardID);
-                                    if (def != null)
+                                    j++;
+                                    if (tg.Name == 49 && tg.Value == 4)
                                     {
-                                        discoveredPicked.Add(def.GetName());
+                                        EntityDef entityDef2 = DefLoader.Get().GetEntityDef(entity3.CardID);
+                                        hintList.Add(entityDef2?.GetName());
                                     }
                                 }
                             }
                         }
-            
-                        // 输出发现候选
-                        if (discoveredOptions.Count > 0)
+                        string hintText2 = string.Join(" ", hintList);
+                        if (hintText2 != "")
                         {
-                            string text = string.Join(" / ", discoveredOptions);
-                            UIStatus.Get().AddInfo($"对手发现候选：{text}", 15f);
-                        }
-            
-                        // 输出选中的卡
-                        if (discoveredPicked.Count > 0)
-                        {
-                            foreach (var name in discoveredPicked)
-                            {
-                                UIStatus.Get().AddInfo($"对手选择了：{name}", 15f);
-                            }
+                            UIStatus.Get().AddInfo($"注意: {hintText2}", 15f);
                         }
                     }
                 }
