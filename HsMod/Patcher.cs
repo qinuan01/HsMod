@@ -908,9 +908,23 @@ namespace HsMod
                     float timeScale = 1f;
                     if (timeGear.Value > 1) timeScale = (float)timeGear.Value;
                     else if (timeGear.Value < -1) timeScale = -1f / (float)timeGear.Value;
-                    if (timeScale >= 32f) timeScale = 32f;
-                    else if (timeScale <= -32f) timeScale = 0f;    // will not exec
-                    Time.timeScale = ((timeScale > ___m_timeScaleMultiplier) ? ((timeScale + (___m_timeScaleMultiplier - 1f) * 0.5f) * ___m_gameTimeScale) : ((___m_timeScaleMultiplier + (timeScale - 1f) * 0.5f) * ___m_gameTimeScale));
+                   if (timeScale >= 32f)
+                    {
+                        timeScale = 32f;
+                        Time.timeScale = (timeScale > ___m_timeScaleMultiplier)
+                            ? ((timeScale + (___m_timeScaleMultiplier - 1f) * 0.5f) * ___m_gameTimeScale)
+                            : ((___m_timeScaleMultiplier + (timeScale - 1f) * 0.5f) * ___m_gameTimeScale);
+                    }
+                    else if (timeScale <= -32f)
+                    {
+                        Time.timeScale = 0f;
+                    }
+                    else
+                    {
+                        Time.timeScale = (timeScale > ___m_timeScaleMultiplier)
+                            ? ((timeScale + (___m_timeScaleMultiplier - 1f) * 0.5f) * ___m_gameTimeScale)
+                            : ((___m_timeScaleMultiplier + (timeScale - 1f) * 0.5f) * ___m_gameTimeScale);
+                    }                    
                     return false;
                 }
                 else return true;
