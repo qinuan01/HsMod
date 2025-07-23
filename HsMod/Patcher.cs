@@ -1885,50 +1885,72 @@ namespace HsMod
                     if (isCardTrackerEnable.Value && !GameMgr.Get().IsBattlegrounds() && !GameMgr.Get().IsMercenaries())
                     {
                         if (powerList == null) return;
-                        List<string> hintList = new List<string>();
-                        int i = 0;
-                        foreach (Network.PowerHistory pl in powerList)
+            
+                        List<string> discoveredOptions = new();
+                        List<string> discoveredPicked = new();
+            
+                        foreach (var pl in powerList)
                         {
-                            i++;
                             if (pl == null) continue;
-                            Network.PowerHistory powerHistory = pl;
-                            if (powerHistory.Type == Network.PowerType.SHOW_ENTITY)
+            
+                            if (pl.Type == Network.PowerType.SHOW_ENTITY)
                             {
-                                Network.Entity netEntity = ((Network.HistShowEntity)powerHistory).Entity;
-                                Entity entity = __instance?.GetEntity(netEntity.ID);
-                                if (entity != null && entity.GetControllerSide() == global::Player.Side.OPPOSING && entity.GetZone() == TAG_ZONE.SETASIDE && entity.GetCardType() != TAG_CARDTYPE.ENCHANTMENT)
+                                var netEntity = ((Network.HistShowEntity)pl).Entity;
+                                var entity = __instance?.GetEntity(netEntity.ID);
+            
+                                if (entity != null &&
+                                    entity.GetControllerSide() == Player.Side.OPPOSING &&
+                                    entity.GetZone() == TAG_ZONE.SETASIDE &&
+                                    entity.GetCardType() != TAG_CARDTYPE.ENCHANTMENT)
                                 {
-                                    EntityDef entityDef = DefLoader.Get()?.GetEntityDef(netEntity.CardID);
-                                    if (entityDef != null && entityDef.GetCardType() != TAG_CARDTYPE.ENCHANTMENT && !entityDef.IsQuestline())
+                                    var def = DefLoader.Get()?.GetEntityDef(netEntity.CardID);
+                                    if (def != null && !def.IsQuestline())
                                     {
-                                        string hintText = entityDef.GetName();
-                                        if (hintText != null)
-                                        {
-                                            hintText = hintText + "\n" + entityDef.GetCardTextInHand();
-                                            UIStatus.Get().AddInfo($"注意: {hintText}", 15f);
-                                        }
+                                        discoveredOptions.Add(def.GetName());
                                     }
                                 }
                             }
-                            if (powerHistory.Type == Network.PowerType.FULL_ENTITY)
+            
+                            if (pl.Type == Network.PowerType.FULL_ENTITY)
                             {
-                                Network.Entity entity3 = ((Network.HistFullEntity)powerHistory).Entity;
-                                int j = 0;
-                                foreach (Network.Entity.Tag tg in entity3.Tags)
+                                var entity3 = ((Network.HistFullEntity)pl).Entity;
+            
+                                bool isOpponent = false;
+                                bool isToHand = false;
+            
+                                foreach (var tg in entity3.Tags)
                                 {
-                                    j++;
-                                    if (tg.Name == 49 && tg.Value == 4)
+                                    if (tg.Name == 49 && tg.Value == 4) // ZONE = HAND
+                                        isToHand = true;
+                                    if (tg.Name == 50 && tg.Value == 1) // CONTROLLER = OPPOSING
+                                        isOpponent = true;
+                                }
+            
+                                if (isOpponent && isToHand)
+                                {
+                                    var def = DefLoader.Get().GetEntityDef(entity3.CardID);
+                                    if (def != null)
                                     {
-                                        EntityDef entityDef2 = DefLoader.Get().GetEntityDef(entity3.CardID);
-                                        hintList.Add(entityDef2?.GetName());
+                                        discoveredPicked.Add(def.GetName());
                                     }
                                 }
                             }
                         }
-                        string hintText2 = string.Join(" ", hintList);
-                        if (hintText2 != "")
+            
+                        // 输出发现候选
+                        if (discoveredOptions.Count > 0)
                         {
-                            UIStatus.Get().AddInfo($"注意: {hintText2}", 15f);
+                            string text = string.Join(" / ", discoveredOptions);
+                            UIStatus.Get().AddInfo($"对手发现候选：{text}", 15f);
+                        }
+            
+                        // 输出选中的卡
+                        if (discoveredPicked.Count > 0)
+                        {
+                            foreach (var name in discoveredPicked)
+                            {
+                                UIStatus.Get().AddInfo($"对手选择了：{name}", 15f);
+                            }
                         }
                     }
                 }
@@ -1937,6 +1959,7 @@ namespace HsMod
                     Utils.MyLogger(BepInEx.Logging.LogLevel.Error, ex);
                 }
             }
+
 
             // 变装大师识别，40牌识别
             [HarmonyPrefix]
