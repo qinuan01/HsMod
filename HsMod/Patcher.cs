@@ -1334,7 +1334,7 @@ namespace HsMod
             {
                 if (isExtendedBMEnable.Value)
                 {
-                    if (___m_timeSinceLastEmote < 1.5f)
+                    if (___m_timeSinceLastEmote < 0.5f)
                     {
                         __result = true;
                         return false;
