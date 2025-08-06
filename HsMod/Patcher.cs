@@ -21,6 +21,8 @@ namespace HsMod
     //    Harmony mHarmony;
     //    Type mType;
     //}
+
+
     public static class PatchManager
     {
         public static List<Harmony> AllHarmony = new List<Harmony>();    //保存补丁信息，方便定向卸载。
@@ -1458,6 +1460,30 @@ namespace HsMod
                 return list;
             }
 
+
+            //解锁酒馆礼遇
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(MulliganManager), "ToggleHoldState", new Type[] { typeof(Card) })]
+            public static void PatchToggleHoldState(ref Card toggleCard)
+            {
+                if (!isBgsSeasonTicketUnlock.Value) return;
+                var entity = toggleCard?.GetEntity();
+                if (entity != null)
+                {
+                    entity.SetTag(GAME_TAG.BACON_LOCKED_MULLIGAN_HERO, false);
+                }
+
+            }
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(TB_BaconShop), "ConfigureLockedMulliganCardActor")]
+            public static bool PatchConfigureLockedMulliganCardActor(Actor actor, bool shown)
+            {
+                if (isBgsSeasonTicketUnlock.Value)
+                {
+                    return false;
+                }
+                return true;
+            }
             //快速战斗 - 理论上可以用于所有模式 现只应用于酒馆战旗或佣兵战纪的ai
             [HarmonyReversePatch]
             [HarmonyPatch(typeof(SpellController), "OnProcessTaskList")]
@@ -1556,7 +1582,12 @@ namespace HsMod
 
         public class PatchHearthstone
         {
+
+
             // fix #131
+
+
+
             [HarmonyPostfix]
             [HarmonyPatch(typeof(TagMap), "GetMap")]
             public static void PatchTagMapGetMap(ref Dictionary<int, int> __result)
@@ -1916,6 +1947,8 @@ namespace HsMod
                             UIStatus.Get().AddInfo($"注意: {hintText2}", 15f);
                         }
                     }
+
+
                 }
                 catch (Exception ex)
                 {
@@ -2023,10 +2056,10 @@ namespace HsMod
             {
                 if (sceneDef != null)
                 {
-                    if (skinPet.Value == 0)
-                        sceneDef.SetupData.FriendlyPetSkinDbId = 0;
-                    if (skinOpposingPet.Value == 0)
-                        sceneDef.SetupData.OpponentPetSkinDbId = 0;
+                    if (skinPet.Value != -1)
+                        sceneDef.SetupData.FriendlyPetSkinDbId = skinPet.Value;
+                    if (skinOpposingPet.Value != -1)
+                        sceneDef.SetupData.OpponentPetSkinDbId = skinOpposingPet.Value;
                 }
             }
 
@@ -2321,23 +2354,23 @@ namespace HsMod
             }
 
 
-            //鲍勃替换语音
-            [HarmonyPrefix]
-            [HarmonyPatch(typeof(TB_BaconShop), "GetFavoriteBattlegroundsGuideSkinCardId")]
-            public static bool PatchGetFavoriteBattlegroundsGuideSkinCardId(ref string __result)
-            {
-                if (skinBob.Value == -1)
-                    return true;
-                else
-                {
-                    if (Utils.CheckInfo.IsHero(skinBob.Value, out Assets.CardHero.HeroType _))
-                    {
-                        __result = GameUtils.TranslateDbIdToCardId(skinBob.Value);
-                        return false;
-                    }
-                    else return true;
-                }
-            }
+            ////鲍勃替换语音
+            //[HarmonyPrefix]
+            //[HarmonyPatch(typeof(TB_BaconShop), "GetFavoriteBattlegroundsGuideSkinCardId")]
+            //public static bool PatchGetFavoriteBattlegroundsGuideSkinCardId(ref string __result)
+            //{
+            //    if (skinBob.Value == -1)
+            //        return true;
+            //    else
+            //    {
+            //        if (Utils.CheckInfo.IsHero(skinBob.Value, out Assets.CardHero.HeroType _))
+            //        {
+            //            __result = GameUtils.TranslateDbIdToCardId(skinBob.Value);
+            //            return false;
+            //        }
+            //        else return true;
+            //    }
+            //}
 
             //游戏面板替换
             [HarmonyPrefix]
@@ -2452,6 +2485,27 @@ namespace HsMod
                 __result = finisherGameplaySettings;
                 return false;
             }
+            
+            //反和谐
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(AssetLoader), "GetRuntimeAssetVariant", new Type[]
+            {
+                    typeof(AssetReference),
+                    typeof(Hearthstone.AssetVariantTags.Quality),
+                    typeof(bool)
+            })]
+            public static bool PatchAssetLoader(ref AssetReference assetRef, ref bool disableLocalization)
+            {
+                if (isPatchAssetLoader.Value)
+                {
+                    if (assetRef.FileName != null && assetRef.FileName.Length > 7 && !assetRef.FileName.ToLower().Contains("logo") && assetRef.FileName.Substring(assetRef.FileName.Length - 7) != ".prefab" && assetRef.FileName.Substring(assetRef.FileName.Length - 4) != ".wav" && assetRef.FileName.Contains("."))
+                    {
+                        disableLocalization = true;
+                    }
+                }
+                return true;
+            }
+
 
             //偏好硬币修改，不需要patch
             //[HarmonyPrefix]
