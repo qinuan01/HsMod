@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using static HsMod.PluginConfig;
 
-
+//
 namespace HsMod
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
